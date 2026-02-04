@@ -81,19 +81,12 @@ Rely on open-source tools and demo/development hosting environment
 
 ## 🛠 Tech Stack
 
-**Recommended Stack (Option 1 - Boosted by Orange):**
 - **Frontend:** Angular
 - **Backend:** NestJS
 - **Database:** PostgreSQL
 - **Documentation:** Swagger + Postman collection
 - **Deployment:** Dockerized setup
 
-**Alternative Stack (Option 2):**
-- Angular + Express (Node.js) + MongoDB
-
-> ⚡ **We highly recommend Option 1** for this project.
-
-## 🚀 Getting Started
 
 ### Prerequisites
 - **Node.js** (v18 or higher) - [Download](https://nodejs.org/)
