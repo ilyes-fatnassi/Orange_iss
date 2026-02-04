@@ -96,63 +96,217 @@ Rely on open-source tools and demo/development hosting environment
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js (v18 or higher)
-- PostgreSQL (v14 or higher)
-- Docker & Docker Compose
-- Git
+- **Node.js** (v18 or higher) - [Download](https://nodejs.org/)
+- **npm** or **yarn**
+- **PostgreSQL** (v14 or higher) - [Download](https://www.postgresql.org/download/)
+- **Docker & Docker Compose** (optional, recommended) - [Download](https://www.docker.com/)
+- **Git**
 
-### Installation
+### Quick Start (Recommended)
 
-1. **Clone the repository**
+#### Option 1: Using Start Script (Easiest)
+
+**Windows (PowerShell):**
+```powershell
+.\start.ps1
+```
+
+**Linux/Mac:**
+```bash
+chmod +x start.sh
+./start.sh
+```
+
+The script will guide you through:
+1. Installing dependencies
+2. Setting up environment variables
+3. Starting the application
+
+#### Option 2: Using Docker
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/YOUR_ORG/iss_orange.git
+cd iss_orange
+
+# 2. Copy environment file
+cp .env.example .env
+# Edit .env with your configuration
+
+# 3. Start all services (PostgreSQL, Backend, Frontend)
+docker-compose up
+```
+
+**Access the application:**
+- **Frontend:** http://localhost:4200
+- **Backend API:** http://localhost:3000
+- **API Documentation:** http://localhost:3000/api/docs
+
+#### Option 3: Manual Setup
+
+**1. Clone and Setup**
 ```bash
 git clone https://github.com/YOUR_ORG/iss_orange.git
 cd iss_orange
+cp .env.example .env
+# Edit .env with your settings
 ```
 
-2. **Backend Setup**
+**2. Backend Setup**
 ```bash
 cd backend
 npm install
-cp .env.example .env  # Configure environment variables
 npm run start:dev
 ```
 
-3. **Frontend Setup**
+**3. Frontend Setup** (in a new terminal)
 ```bash
 cd frontend
 npm install
-ng serve
+npm start
 ```
 
-4. **Using Docker (Recommended)**
-```bash
-docker-compose up -d
+**4. Database Setup**
+
+Ensure PostgreSQL is running and create the database:
+```sql
+CREATE DATABASE iss_orange;
+CREATE USER iss_user WITH PASSWORD 'your_password';
+GRANT ALL PRIVILEGES ON DATABASE iss_orange TO iss_user;
 ```
+
+### For Team Members
+
+If you're joining the team, follow these steps:
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/YOUR_ORG/iss_orange.git
+   cd iss_orange
+   ```
+
+2. **Install dependencies**
+   ```bash
+   # Backend
+   cd backend
+   npm install
+
+   # Frontend
+   cd ../frontend
+   npm install
+   ```
+
+3. **Configure environment**
+   ```bash
+   cp .env.example .env
+   # Ask team lead for the correct values
+   ```
+
+4. **Start coding!**
+   ```bash
+   # Option 1: Use Docker
+   docker-compose up
+
+   # Option 2: Run the start script
+   .\start.ps1  # Windows
+   ./start.sh   # Linux/Mac
+   ```
+
+5. **Read the team guidelines**
+   - [CONTRIBUTING.md](CONTRIBUTING.md) - Collaboration guidelines
+   - [docs/TICKET_WORKFLOW.md](docs/TICKET_WORKFLOW.md) - How to work with tickets
+   - [docs/WORKFLOW.md](docs/WORKFLOW.md) - Git workflow
+   - [docs/SETUP.md](docs/SETUP.md) - Complete setup checklist
+
+
 
 ## 📁 Project Structure
 
 ```
 iss_orange/
-├── frontend/           # Angular application
-├── backend/            # NestJS API
-├── docs/               # LaTeX documentation & project docs
-├── .github/            # GitHub templates & workflows
-├── docker-compose.yml  # Docker configuration
-├── CONTRIBUTING.md     # Team collaboration guidelines
-└── README.md           # This file
+├── backend/                 # NestJS Backend API
+│   ├── src/
+│   │   ├── main.ts         # Application entry point
+│   │   ├── app.module.ts   # Root module
+│   │   └── ...             # Feature modules (to be added)
+│   ├── package.json        # Backend dependencies
+│   ├── tsconfig.json       # TypeScript config
+│   └── Dockerfile          # Docker configuration
+├── frontend/                # Angular Frontend
+│   ├── src/
+│   │   ├── app/            # Application components
+│   │   ├── environments/   # Environment configs
+│   │   └── main.ts         # App entry point
+│   ├── package.json        # Frontend dependencies
+│   ├── angular.json        # Angular CLI config
+│   └── Dockerfile          # Docker configuration
+├── docs/                    # Documentation
+│   ├── SETUP.md            # Team setup guide
+│   ├── WORKFLOW.md         # Git workflow
+│   └── TICKET_WORKFLOW.md  # Ticket-based development
+├── .github/                 # GitHub templates
+│   ├── ISSUE_TEMPLATE/     # Issue templates
+│   └── pull_request_template.md
+├── docker-compose.yml       # Docker services config
+├── .env.example            # Environment variables template
+├── .gitignore              # Git ignore rules
+├── start.ps1               # Windows startup script
+├── start.sh                # Linux/Mac startup script
+├── CONTRIBUTING.md         # Contribution guidelines
+└── README.md               # This file
 ```
 
-## 🤝 Contributing
+## 🛠 Available Commands
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for team collaboration guidelines, branch strategy, and coding standards.
+### Backend (NestJS)
+```bash
+cd backend
 
-### Quick Start for Contributors
+npm run start:dev      # Start development server
+npm run build          # Build for production
+npm run start:prod     # Run production build
+npm run lint           # Lint code
+npm run test           # Run unit tests
+npm run test:e2e       # Run E2E tests
+```
 
-1. Create branch from `dev`: `git checkout -b feature/your-feature`
-2. Make changes and commit: `git commit -m "feat: your change"`
-3. Push and create Pull Request
-4. Request review from team member
-5. Merge after approval
+### Frontend (Angular)
+```bash
+cd frontend
+
+npm start              # Start dev server (http://localhost:4200)
+npm run build          # Build for production
+npm run watch          # Build with watch mode
+npm run test           # Run unit tests
+npm run lint           # Lint code
+
+# Angular CLI commands
+ng generate component components/my-component
+ng generate service services/my-service
+ng generate module modules/my-module
+```
+
+### Docker
+```bash
+docker-compose up           # Start all services
+docker-compose up -d        # Start in detached mode
+docker-compose down         # Stop all services
+docker-compose logs -f      # View logs
+docker-compose ps           # List running services
+docker-compose restart      # Restart services
+```
+
+## 🔧 Development Workflow
+
+1. **Pick a ticket** from GitHub Issues
+2. **Create a branch**: `git checkout -b feature/25-ticket-name`
+3. **Code your solution**
+4. **Commit**: `git commit -m "feat: description (#25)"`
+5. **Push**: `git push origin feature/25-ticket-name`
+6. **Create Pull Request** with "Closes #25"
+7. **Get reviewed and merge**
+
+See [docs/TICKET_WORKFLOW.md](docs/TICKET_WORKFLOW.md) for detailed workflow.
 
 ## 📚 Documentation
 
