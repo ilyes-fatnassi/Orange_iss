@@ -3,6 +3,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
+import { SeedService } from './database/seed.service';
+import { Role, User, Department } from './entities';
 
 @Module({
   imports: [
@@ -29,8 +32,11 @@ import { AppService } from './app.service';
       inject: [ConfigService],
     }),
 
-    // Add your feature modules here
-    // AuthModule,
+    // Register entities for seed service
+    TypeOrmModule.forFeature([Role, User, Department]),
+
+    // Feature modules
+    AuthModule,
     // UsersModule,
     // OffersModule,
     // ApplicationsModule,
@@ -38,6 +44,6 @@ import { AppService } from './app.service';
     // AiModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, SeedService],
 })
 export class AppModule {}
