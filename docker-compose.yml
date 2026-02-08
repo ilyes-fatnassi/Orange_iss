@@ -1,28 +1,6 @@
 version: '3.8'
 
-services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:14-alpine
-    container_name: iss_orange_db
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: iss_orange
-      POSTGRES_USER: iss_user
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - iss_network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U iss_user -d iss_orange"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # NestJS Backend
+services:  # NestJS Backend
   backend:
     build:
       context: ./backend
@@ -33,17 +11,14 @@ services:
       - "3000:3000"
     environment:
       NODE_ENV: development
-      DATABASE_HOST: postgres
-      DATABASE_PORT: 5432
-      DATABASE_NAME: iss_orange
-      DATABASE_USER: iss_user
-      DATABASE_PASSWORD: ${DB_PASSWORD:-changeme}
+      DATABASE_HOST: ${DATABASE_HOST:-localhost}
+      DATABASE_PORT: ${DATABASE_PORT:-5432}
+      DATABASE_NAME: ${DATABASE_NAME:-postgres}
+      DATABASE_USER: ${DATABASE_USER:-iss_user}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-changeme}
       JWT_SECRET: ${JWT_SECRET:-dev_secret_key_change_in_production}
       JWT_EXPIRATION: 7d
       FRONTEND_URL: http://localhost:4200
-    depends_on:
-      postgres:
-        condition: service_healthy
     volumes:
       - ./backend/src:/app/src
     networks:
@@ -67,10 +42,6 @@ services:
       - iss_network
     depends_on:
       - backend
-
-volumes:
-  postgres_data:
-    driver: local
 
 networks:
   iss_network:

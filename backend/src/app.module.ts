@@ -15,7 +15,7 @@ import { Role, User, Department } from './entities';
       envFilePath: '.env',
     }),
 
-    // Database connection
+    // Database connection (Supabase PostgreSQL)
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -28,6 +28,9 @@ import { Role, User, Department } from './entities';
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: configService.get('NODE_ENV') !== 'production',
         logging: configService.get('NODE_ENV') === 'development',
+        ssl: configService.get('DATABASE_HOST', '').includes('supabase')
+          ? { rejectUnauthorized: false }
+          : false,
       }),
       inject: [ConfigService],
     }),
