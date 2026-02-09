@@ -9,10 +9,67 @@
 **Methodology:** Agile/Scrum
 
 ### Description
-This project aims to develop a centralized platform that manages internships and PFE processes, from offer publication to final evaluation. It integrates an explainable AI module that analyzes student CVs, matches skills with internship requirements, and ranks candidates with transparency. The goal is to support faster, fairer, and more objective decision-making.
+This project aims to develop a centralized platform that manages internships and PFE (Projet de Fin d'Études / Final Year Project) processes, from offer publication to final evaluation. It integrates an explainable AI module that analyzes student CVs, matches skills with internship requirements, and ranks candidates with transparency. The goal is to support faster, fairer, and more objective decision-making.
 
 ### Design Process
 We will use **Agile methodology** for this project, where each sprint focuses on a specific feature. Feedback from stakeholders will be taken into consideration to improve functionality, usability, and AI explainability, ensuring that the system meets needs efficiently.
+
+## ✨ Key Features
+
+| Feature | Description |
+|---------|-------------|
+| 📝 **Offer Management** | Create, publish, and manage internship and PFE offers with clear skill requirements |
+| 📤 **Application System** | Students submit applications online and upload CVs |
+| 🤖 **AI CV Analysis** | Automated parsing and analysis of candidate CVs against offer requirements |
+| 📊 **Smart Ranking** | AI-powered candidate ranking based on skill matching |
+| 💡 **Explainable AI (XAI)** | Transparent explanations of how and why candidates are ranked |
+| 🔐 **Authentication & Authorization** | JWT-based authentication with role-based access control (RBAC) |
+| 👥 **User Role Management** | Distinct roles for Candidates, Coordinators, Supervisors, and Admins |
+| ✅ **Evaluation & Tracking** | Systematic evaluation workflows for supervisors and coordinators |
+| 📄 **API Documentation** | Interactive Swagger/OpenAPI docs for all backend endpoints |
+| 🐳 **Dockerized Deployment** | Full Docker Compose setup for easy local and production deployment |
+
+## 🏗 Architecture Overview
+
+The platform follows a three-tier architecture:
+
+```
+┌──────────────────┐       ┌──────────────────┐       ┌──────────────────┐
+│    Frontend       │       │    Backend        │       │    Database       │
+│    (Angular)      │ ───── │    (NestJS)       │ ───── │   (PostgreSQL)   │
+│                   │  HTTP │                   │  SQL  │                   │
+│  - Landing Page   │ <──── │  - REST API       │ <──── │  - Users & Roles  │
+│  - Auth Pages     │       │  - Auth Module    │       │  - Departments    │
+│  - Dashboard      │       │  - JWT + Passport │       │  - Topics         │
+│  - Offer Listing  │       │  - Swagger Docs   │       │  - Audit Logs     │
+│  - Profile Page   │       │  - Guards & RBAC  │       │  - Refresh Tokens │
+└──────────────────┘       └──────────────────┘       └──────────────────┘
+       Browser                    Server                      Server
+```
+
+**Communication Flow:**
+1. User interacts with the Angular frontend in the browser
+2. Frontend sends HTTP requests to the NestJS backend REST API
+3. Backend processes requests, applies business logic, and queries PostgreSQL
+4. Responses flow back through the backend to the frontend for display
+
+## 🧩 Core Modules
+
+### Backend (NestJS)
+- **Auth Module** — Registration, login, JWT access/refresh tokens, password hashing (bcrypt), role-based guards
+- **User & Role Entities** — User accounts linked to roles (Candidate, Coordinator, Supervisor, Admin)
+- **Department & Topic Entities** — Organizational structure for internship/PFE categorization
+- **Audit Logging** — Tracks key actions for accountability and transparency
+- **Database Seeding** — Automated seed scripts to bootstrap initial data (roles, admin user)
+
+### Frontend (Angular)
+- **Landing Page** — Public-facing hero section with project overview
+- **Authentication Pages** — Login and signup forms with form validation
+- **Dashboard** — Protected route for authenticated users
+- **Profile Page** — User profile management
+- **Offer Listing** — Browse available internship and PFE offers
+- **Shared Components** — Reusable header, footer, and navigation components
+- **Auth Services** — JWT interceptor, auth guard, and auth state management
 
 ## 👥 Target Customers
 
