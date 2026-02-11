@@ -12,6 +12,7 @@ import { Repository } from 'typeorm';
 import * as crypto from 'crypto';
 import { User, Role, RoleType, Department } from '../entities';
 import {
+  CandidateSignupDto,
   CreateUserDto,
   ActivateAccountDto,
   LoginDto,
@@ -43,42 +44,36 @@ export class AuthService {
   ) {}
 
   /**
-   * Public signup (for HR, Department Chiefs, Students)
+   * Public signup (Candidates only)
    */
   async publicSignup(
-    createUserDto: CreateUserDto,
+    signupDto: CandidateSignupDto,
     ipAddress: string,
     userAgent: string,
   ): Promise<{ authResponse: AuthResponseDto; refreshToken: string }> {
     // Check if user already exists
     const existingUser = await this.userRepository.findOne({
-      where: { email: createUserDto.email },
+      where: { email: signupDto.email },
     });
 
     if (existingUser) {
       throw new ConflictException('User with this email already exists');
     }
 
-    // Verify department if DEPT_CHIEF
-    if (createUserDto.role === RoleType.DEPT_CHIEF && !createUserDto.departmentId) {
-      throw new BadRequestException('Department is required for DEPT_CHIEF role');
-    }
-
-    // Get role
+    // Always assign CANDIDATE role — no choice for public signup
     const role = await this.roleRepository.findOne({
-      where: { name: createUserDto.role },
+      where: { name: RoleType.CANDIDATE },
     });
 
     if (!role) {
-      throw new BadRequestException('Invalid role');
+      throw new BadRequestException('Candidate role not configured');
     }
 
-    // Validate password (assuming password is provided in createUserDto temporarily)
-    const password = (createUserDto as any).password || 'TempPassword123!';
-    const validation = this.passwordService.validate(password, {
-      email: createUserDto.email,
-      firstName: createUserDto.firstName,
-      lastName: createUserDto.lastName,
+    // Validate password
+    const validation = this.passwordService.validate(signupDto.password, {
+      email: signupDto.email,
+      firstName: signupDto.firstName,
+      lastName: signupDto.lastName,
     });
 
     if (!validation.valid) {
@@ -87,13 +82,13 @@ export class AuthService {
 
     // Create user with ACTIVE status (immediate access)
     const user = this.userRepository.create({
-      email: createUserDto.email,
-      firstName: createUserDto.firstName,
-      lastName: createUserDto.lastName,
+      email: signupDto.email,
+      firstName: signupDto.firstName,
+      lastName: signupDto.lastName,
       roleId: role.id,
-      departmentId: createUserDto.departmentId,
+      departmentId: null,
       status: 'ACTIVE',
-      password: await this.passwordService.hash(password),
+      password: await this.passwordService.hash(signupDto.password),
       passwordChangedAt: new Date(),
       createdBy: null, // Self-registered
     });
@@ -112,7 +107,7 @@ export class AuthService {
       userId: user.id,
       ipAddress,
       userAgent,
-      details: { email: user.email, role: createUserDto.role },
+      details: { email: user.email, role: RoleType.CANDIDATE },
     });
 
     // Generate tokens
@@ -427,6 +422,33 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
 
+    return this.mapToUserProfile(user);
+  }
+
+  /**
+   * Update current user profile (name / email)
+   */
+  async updateProfile(userId: string, data: { firstName?: string; lastName?: string; email?: string }): Promise<UserProfileDto> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['role', 'department'],
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (data.firstName) user.firstName = data.firstName;
+    if (data.lastName) user.lastName = data.lastName;
+    if (data.email && data.email !== user.email) {
+      const existing = await this.userRepository.findOne({ where: { email: data.email } });
+      if (existing) {
+        throw new BadRequestException('Email already in use');
+      }
+      user.email = data.email;
+    }
+
+    await this.userRepository.save(user);
     return this.mapToUserProfile(user);
   }
 

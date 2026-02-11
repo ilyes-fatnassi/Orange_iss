@@ -4,15 +4,19 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { OffersModule } from './offers/offers.module';
+import { ApplicationsModule } from './applications/applications.module';
+import { LikesModule } from './likes/likes.module';
+import { TopicsModule } from './topics/topics.module';
 import { SeedService } from './database/seed.service';
-import { Role, User, Department } from './entities';
+import { Role, User, Department, Topic } from './entities';
 
 @Module({
   imports: [
     // Configuration module
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: ['.env', '../.env'],
     }),
 
     // Database connection (Supabase PostgreSQL)
@@ -36,15 +40,14 @@ import { Role, User, Department } from './entities';
     }),
 
     // Register entities for seed service
-    TypeOrmModule.forFeature([Role, User, Department]),
+    TypeOrmModule.forFeature([Role, User, Department, Topic]),
 
     // Feature modules
     AuthModule,
-    // UsersModule,
-    // OffersModule,
-    // ApplicationsModule,
-    // CvsModule,
-    // AiModule,
+    OffersModule,
+    ApplicationsModule,
+    LikesModule,
+    TopicsModule,
   ],
   controllers: [AppController],
   providers: [AppService, SeedService],

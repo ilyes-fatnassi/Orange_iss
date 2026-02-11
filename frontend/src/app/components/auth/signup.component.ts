@@ -1,10 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
-import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-signup',
@@ -23,7 +21,7 @@ import { environment } from '../../../environments/environment';
         <div class="auth-box">
           <div class="auth-header-box">
             <h2>Create Account</h2>
-            <p>Join our internship platform</p>
+            <p>Sign up to browse and apply for internship offers</p>
           </div>
 
           <form class="auth-form" (ngSubmit)="onSignUp()">
@@ -119,46 +117,6 @@ import { environment } from '../../../environments/environment';
                 </button>
               </div>
               <p class="password-hint">Must contain uppercase, lowercase, number & special char</p>
-            </div>
-
-            <div class="form-group">
-              <label for="role">Account Type</label>
-              <div class="input-wrapper">
-                <svg class="input-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M10.5 1.5H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6.5a2 2 0 00-2-2h-6V1.5z"/>
-                </svg>
-                <select
-                  id="role"
-                  class="form-input"
-                  [(ngModel)]="role"
-                  name="role"
-                  required
-                  [disabled]="loading"
-                >
-                  <option value="">Select your role</option>
-                  <option value="HR_ADMIN">HR Manager</option>
-                  <option value="DEPT_CHIEF">Department Chief</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-group" *ngIf="role === 'DEPT_CHIEF'">
-              <label for="department">Department</label>
-              <div class="input-wrapper">
-                <svg class="input-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
-                </svg>
-                <select
-                  id="department"
-                  class="form-input"
-                  [(ngModel)]="department"
-                  name="department"
-                  [disabled]="loading"
-                >
-                  <option value="">Select department</option>
-                  <option *ngFor="let dept of departments" [value]="dept.id">{{ dept.name }}</option>
-                </select>
-              </div>
             </div>
 
             <div class="terms-agreement">
@@ -479,27 +437,17 @@ import { environment } from '../../../environments/environment';
     }
   `]
 })
-export class SignupComponent implements OnInit {
+export class SignupComponent {
   firstName: string = '';
   lastName: string = '';
   email: string = '';
   password: string = '';
-  role: string = '';
-  department: string = '';
   agreeTerms: boolean = false;
   loading: boolean = false;
   errorMessage: string = '';
   showPassword: boolean = false;
-  departments: { id: string; name: string }[] = [];
 
-  constructor(private authService: AuthService, private router: Router, private http: HttpClient) {}
-
-  ngOnInit() {
-    this.http.get<{ id: string; name: string }[]>(`${environment.apiUrl}/departments`).subscribe({
-      next: (deps) => this.departments = deps,
-      error: () => console.warn('Could not load departments')
-    });
-  }
+  constructor(private authService: AuthService, private router: Router) {}
 
   togglePasswordVisibility() {
     this.showPassword = !this.showPassword;
@@ -507,19 +455,13 @@ export class SignupComponent implements OnInit {
 
   onSignUp() {
     // Validate required fields
-    if (!this.firstName || !this.lastName || !this.email || !this.password || !this.role) {
+    if (!this.firstName || !this.lastName || !this.email || !this.password) {
       this.errorMessage = 'Please fill in all required fields';
       return;
     }
 
     if (!this.agreeTerms) {
       this.errorMessage = 'Please agree to the terms and conditions';
-      return;
-    }
-
-    // Validate department for DEPT_CHIEF role
-    if (this.role === 'DEPT_CHIEF' && !this.department) {
-      this.errorMessage = 'Please select a department';
       return;
     }
 
@@ -531,15 +473,13 @@ export class SignupComponent implements OnInit {
       lastName: this.lastName,
       email: this.email,
       password: this.password,
-      role: this.role,
-      departmentId: this.department || undefined
     };
 
     this.authService.signup(signupData).subscribe({
       next: (response: any) => {
         console.log('Signup successful:', response);
         this.loading = false;
-        this.router.navigate(['/profile']);
+        this.router.navigate(['/dashboard']);
       },
       error: (error: any) => {
         console.error('Signup error:', error);

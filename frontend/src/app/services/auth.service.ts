@@ -26,6 +26,13 @@ export interface LoginData {
   password: string;
 }
 
+export interface SignupData {
+  email: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+}
+
 export interface CreateUserData {
   email: string;
   firstName: string;
@@ -61,9 +68,9 @@ export class AuthService {
   }
 
   /**
-   * Public signup
+   * Public signup (Candidates only)
    */
-  signup(data: CreateUserData & { password: string }): Observable<AuthResponse> {
+  signup(data: SignupData): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/signup`, data, {
       withCredentials: true
     }).pipe(

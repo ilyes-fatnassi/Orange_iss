@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Patch,
   Body,
   Get,
   UseGuards,
@@ -21,6 +22,7 @@ import {
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import {
+  CandidateSignupDto,
   CreateUserDto,
   ActivateAccountDto,
   LoginDto,
@@ -44,14 +46,14 @@ export class AuthController {
   @Post('signup')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
-    summary: 'Public user signup',
-    description: 'Register a new account (HR, Department Chief, or Student)',
+    summary: 'Candidate signup',
+    description: 'Register a new candidate account to apply for offers',
   })
   @ApiResponse({ status: 201, type: AuthResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid data' })
   @ApiResponse({ status: 409, description: 'User already exists' })
   async signup(
-    @Body() createUserDto: CreateUserDto,
+    @Body() signupDto: CandidateSignupDto,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponseDto> {
@@ -59,7 +61,7 @@ export class AuthController {
     const userAgent = req.headers['user-agent'] || '';
 
     const { authResponse, refreshToken } = await this.authService.publicSignup(
-      createUserDto,
+      signupDto,
       ipAddress,
       userAgent,
     );
@@ -209,6 +211,19 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   async getCurrentUser(@CurrentUser() user: User): Promise<UserProfileDto> {
     return this.authService.getCurrentUser(user.id);
+  }
+
+  @Patch('profile')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Update current user profile' })
+  @ApiResponse({ status: 200, type: UserProfileDto })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  async updateProfile(
+    @CurrentUser() user: User,
+    @Body() body: { firstName?: string; lastName?: string; email?: string },
+  ): Promise<UserProfileDto> {
+    return this.authService.updateProfile(user.id, body);
   }
 
   @Post('password-reset/request')

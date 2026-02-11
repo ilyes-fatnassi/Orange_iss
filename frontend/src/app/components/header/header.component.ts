@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, Router } from '@angular/router';
+import { RouterLink, Router, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -8,7 +8,7 @@ import { takeUntil } from 'rxjs/operators';
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, RouterLinkActive],
   template: `
     <header class="header">
       <div class="header-container">
@@ -16,10 +16,12 @@ import { takeUntil } from 'rxjs/operators';
           <a routerLink="/" class="logo-box">orange</a>
         </div>
         
-        <nav class="nav-menu" *ngIf="isAuthenticated">
-          <a [routerLink]="['/dashboard']" routerLinkActive="active" class="nav-link">Dashboard</a>
-          <a href="#" class="nav-link">Mes candidatures</a>
-          <a href="#" class="nav-link">AI Feedback</a>
+        <nav class="nav-menu">
+          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-link">Home</a>
+          <ng-container *ngIf="isAuthenticated">
+            <a [routerLink]="['/dashboard']" routerLinkActive="active" class="nav-link">Dashboard</a>
+            <a [routerLink]="['/profile']" routerLinkActive="active" class="nav-link">Profile</a>
+          </ng-container>
         </nav>
 
         <div class="header-actions">

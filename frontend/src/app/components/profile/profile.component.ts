@@ -1,15 +1,21 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { HeaderComponent } from '../header/header.component';
+import { FooterComponent } from '../footer/footer.component';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule, HeaderComponent, FooterComponent],
   template: `
+    <app-header></app-header>
     <div class="profile-container">
       <div class="profile-header">
         <h1>My Account</h1>
@@ -24,10 +30,11 @@ import { takeUntil } from 'rxjs/operators';
             </div>
           </div>
 
-          <div class="profile-info-grid">
+          <div class="profile-info-grid" [class.single-col]="isCandidate()">
+            <!-- Personal Information — always shown -->
             <div class="info-section">
               <h2>Personal Information</h2>
-              
+
               <div class="info-row">
                 <div class="info-label">
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
@@ -58,22 +65,12 @@ import { takeUntil } from 'rxjs/operators';
                 </div>
                 <div class="info-value">{{ user.email }}</div>
               </div>
-
-              <div class="info-row">
-                <div class="info-label">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
-                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
-                  </svg>
-                  Account ID
-                </div>
-                <div class="info-value id-value">{{ user.id }}</div>
-              </div>
             </div>
 
-            <div class="info-section">
+            <!-- Role & Department — only for DEPT_CHIEF and HR_ADMIN -->
+            <div class="info-section" *ngIf="!isCandidate()">
               <h2>Role & Department</h2>
-              
+
               <div class="info-row">
                 <div class="info-label">
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
@@ -82,46 +79,59 @@ import { takeUntil } from 'rxjs/operators';
                   Role
                 </div>
                 <div class="info-value">
-                  <span class="role-badge" [class.hr]="user.role?.name === 'HR'" [class.chief]="user.role?.name === 'DEPARTMENT_CHIEF'">
+                  <span class="role-badge" [class.hr]="getUserRole() === 'HR_ADMIN'" [class.chief]="getUserRole() === 'DEPT_CHIEF'">
                     {{ getRoleName() }}
                   </span>
                 </div>
               </div>
 
-              <div class="info-row" *ngIf="user.department">
+              <!-- Department — only for DEPT_CHIEF -->
+              <div class="info-row" *ngIf="isDeptChief() && getDepartmentName()">
                 <div class="info-label">
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
                   </svg>
                   Department
                 </div>
-                <div class="info-value">{{ user.department.name }}</div>
-              </div>
-
-              <div class="info-row" *ngIf="!user.department">
-                <div class="info-label">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
-                  </svg>
-                  Department
-                </div>
-                <div class="info-value text-muted">Not assigned</div>
+                <div class="info-value">{{ getDepartmentName() }}</div>
               </div>
             </div>
           </div>
 
+          <!-- Edit mode -->
+          <div class="edit-form" *ngIf="editing">
+            <h2>Edit Profile</h2>
+            <div class="edit-row">
+              <label>First Name</label>
+              <input type="text" [(ngModel)]="editData.firstName" />
+            </div>
+            <div class="edit-row">
+              <label>Last Name</label>
+              <input type="text" [(ngModel)]="editData.lastName" />
+            </div>
+            <div class="edit-row">
+              <label>Email</label>
+              <input type="email" [(ngModel)]="editData.email" />
+            </div>
+            <div class="edit-actions">
+              <button class="btn-secondary" (click)="cancelEdit()">Cancel</button>
+              <button class="btn-primary" (click)="saveProfile()" [disabled]="saving">{{ saving ? 'Saving...' : 'Save Changes' }}</button>
+            </div>
+            <div class="edit-error" *ngIf="editError">{{ editError }}</div>
+          </div>
+
           <div class="profile-actions">
-            <button class="btn-secondary" routerLink="/dashboard">
+            <button class="btn-secondary" (click)="startEdit()" *ngIf="!editing">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
+                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
               </svg>
-              Back to Dashboard
+              Edit Profile
             </button>
-            <button class="btn-primary" (click)="logout()">
+            <button class="btn-danger" (click)="logout()">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd"/>
               </svg>
-              Logout
+              Sign Out
             </button>
           </div>
         </div>
@@ -132,6 +142,7 @@ import { takeUntil } from 'rxjs/operators';
         <p>Loading your profile...</p>
       </div>
     </div>
+    <app-footer></app-footer>
   `,
   styles: [`
     .profile-container {
@@ -197,6 +208,13 @@ import { takeUntil } from 'rxjs/operators';
       margin-bottom: 2rem;
     }
 
+    .profile-info-grid.single-col {
+      grid-template-columns: 1fr;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
     .info-section h2 {
       font-size: 1.3rem;
       color: #333;
@@ -233,19 +251,6 @@ import { takeUntil } from 'rxjs/operators';
       color: #333;
       font-weight: 600;
       text-align: right;
-    }
-
-    .id-value {
-      font-family: 'Courier New', monospace;
-      font-size: 0.85rem;
-      max-width: 200px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .text-muted {
-      color: #999 !important;
-      font-style: italic;
     }
 
     .role-badge {
@@ -310,6 +315,79 @@ import { takeUntil } from 'rxjs/operators';
       transform: translateY(-2px);
     }
 
+    .btn-danger {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: #c62828;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #b71c1c;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(198, 40, 40, 0.3);
+    }
+
+    .edit-form {
+      background: #fafafa;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .edit-form h2 {
+      margin: 0 0 1.5rem 0;
+      font-size: 1.3rem;
+      color: #333;
+    }
+
+    .edit-row {
+      margin-bottom: 1rem;
+    }
+
+    .edit-row label {
+      display: block;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 0.4rem;
+      font-size: 0.9rem;
+    }
+
+    .edit-row input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+
+    .edit-row input:focus {
+      border-color: #FF7900;
+      outline: none;
+    }
+
+    .edit-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .edit-error {
+      color: #c62828;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+
     .loading {
       text-align: center;
       color: white;
@@ -358,32 +436,33 @@ import { takeUntil } from 'rxjs/operators';
 })
 export class ProfileComponent implements OnInit, OnDestroy {
   user: any = null;
+  editing = false;
+  saving = false;
+  editError = '';
+  editData = { firstName: '', lastName: '', email: '' };
   private destroy$ = new Subject<void>();
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private http: HttpClient
   ) {}
 
   ngOnInit() {
-    // Get user from auth service
     this.authService.currentUser$.pipe(
       takeUntil(this.destroy$)
     ).subscribe(user => {
       this.user = user;
       if (!user) {
-        // If no user, try to get from localStorage
-        const storedUser = localStorage.getItem('user');
+        const storedUser = localStorage.getItem('current_user');
         if (storedUser) {
           this.user = JSON.parse(storedUser);
         } else {
-          // No user found, redirect to login
           this.router.navigate(['/login']);
         }
       }
     });
 
-    // Also fetch fresh profile from backend
     if (this.authService.isAuthenticated()) {
       this.authService.getCurrentUser().subscribe({
         next: (profile: any) => {
@@ -408,20 +487,77 @@ export class ProfileComponent implements OnInit, OnDestroy {
     return `${firstInitial}${lastInitial}`;
   }
 
+  getUserRole(): string {
+    if (!this.user) return '';
+    if (typeof this.user.role === 'string') return this.user.role;
+    return this.user.role?.name || '';
+  }
+
+  isCandidate(): boolean {
+    return this.getUserRole() === 'CANDIDATE';
+  }
+
+  isDeptChief(): boolean {
+    return this.getUserRole() === 'DEPT_CHIEF';
+  }
+
+  isHrAdmin(): boolean {
+    return this.getUserRole() === 'HR_ADMIN';
+  }
+
+  getDepartmentName(): string {
+    if (!this.user) return '';
+    if (typeof this.user.department === 'string') return this.user.department;
+    return this.user.department?.name || '';
+  }
+
   getRoleName(): string {
-    if (!this.user?.role) return 'Unknown';
-    const roleName = this.user.role.name;
-    
-    switch (roleName) {
-      case 'HR':
-        return 'HR Manager';
-      case 'DEPARTMENT_CHIEF':
+    const role = this.getUserRole();
+    switch (role) {
+      case 'HR_ADMIN':
+        return 'HR Admin';
+      case 'DEPT_CHIEF':
         return 'Department Chief';
-      case 'ADMIN':
-        return 'Administrator';
+      case 'SUPER_ADMIN':
+        return 'Super Admin';
+      case 'CANDIDATE':
+        return 'Candidate';
       default:
-        return roleName;
+        return role;
     }
+  }
+
+  startEdit() {
+    this.editing = true;
+    this.editError = '';
+    this.editData = {
+      firstName: this.user.firstName || '',
+      lastName: this.user.lastName || '',
+      email: this.user.email || ''
+    };
+  }
+
+  cancelEdit() {
+    this.editing = false;
+    this.editError = '';
+  }
+
+  saveProfile() {
+    this.saving = true;
+    this.editError = '';
+    this.http.patch<any>(`${environment.apiUrl}/auth/profile`, this.editData).subscribe({
+      next: (updated: any) => {
+        this.user = { ...this.user, ...this.editData };
+        localStorage.setItem('current_user', JSON.stringify(this.user));
+        this.editing = false;
+        this.saving = false;
+      },
+      error: (err: any) => {
+        this.saving = false;
+        const msg = err?.error?.message;
+        this.editError = Array.isArray(msg) ? msg.join(', ') : (msg || 'Update failed. Please try again.');
+      }
+    });
   }
 
   logout() {
@@ -429,7 +565,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       next: () => {
         this.router.navigate(['/']);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Logout error:', error);
         this.router.navigate(['/']);
       }

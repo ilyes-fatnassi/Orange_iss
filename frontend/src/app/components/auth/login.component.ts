@@ -97,17 +97,7 @@ import { AuthService } from '../../services/auth.service';
             </p>
           </form>
 
-          <div class="demo-users">
-            <p class="demo-title">Demo Accounts:</p>
-            <div class="demo-card">
-              <strong>HR User</strong>
-              <p>hr&#64;orange.com / SecurePass123!</p>
-            </div>
-            <div class="demo-card">
-              <strong>Department Chief</strong>
-              <p>chief&#64;orange.com / SecurePass123!</p>
-            </div>
-          </div>
+          
         </div>
       </div>
     </div>
@@ -450,7 +440,7 @@ export class LoginComponent {
       next: (response: any) => {
         console.log('Login successful:', response);
         this.loading = false;
-        this.router.navigate(['/profile']);
+        this.router.navigate(['/']);
       },
       error: (error: any) => {
         console.error('Login error:', error);

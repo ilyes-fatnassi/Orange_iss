@@ -5,7 +5,7 @@ export enum RoleType {
   HR_ADMIN = 'HR_ADMIN',
   DEPT_CHIEF = 'DEPT_CHIEF',
   SUPER_ADMIN = 'SUPER_ADMIN',
-  RECRUITER = 'RECRUITER',
+  CANDIDATE = 'CANDIDATE',
 }
 
 @Entity('roles')

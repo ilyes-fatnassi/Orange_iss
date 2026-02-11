@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Role, RoleType, Department, User } from '../entities';
+import { Role, RoleType, Department, User, Topic } from '../entities';
 import { PasswordService } from '../auth/services/password.service';
 
 @Injectable()
@@ -16,11 +16,14 @@ export class SeedService {
     private departmentRepository: Repository<Department>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(Topic)
+    private topicRepository: Repository<Topic>,
   ) {}
 
   async seed() {
     await this.seedRoles();
     await this.seedDepartments();
+    await this.seedTopics();
     await this.seedUsers();
   }
 
@@ -39,8 +42,8 @@ export class SeedService {
         description: 'Department chief who can post internship offers',
       },
       {
-        name: RoleType.RECRUITER,
-        description: 'Recruiter who can manage applications',
+        name: RoleType.CANDIDATE,
+        description: 'Candidate who can browse and apply to offers',
       },
     ];
 
@@ -94,6 +97,45 @@ export class SeedService {
         this.logger.log(`✓ Department created: ${deptData.name}`);
       } else {
         this.logger.log(`✓ Department already exists: ${deptData.name}`);
+      }
+    }
+  }
+
+  private async seedTopics() {
+    const engineeringDept = await this.departmentRepository.findOne({
+      where: { name: 'Engineering' },
+    });
+    const marketingDept = await this.departmentRepository.findOne({
+      where: { name: 'Marketing' },
+    });
+    const financeDept = await this.departmentRepository.findOne({
+      where: { name: 'Finance' },
+    });
+
+    const topics = [
+      { name: 'Web Development', description: 'Frontend and backend web technologies', departmentId: engineeringDept?.id },
+      { name: 'Mobile Development', description: 'iOS and Android app development', departmentId: engineeringDept?.id },
+      { name: 'DevOps', description: 'CI/CD, cloud infrastructure, containerization', departmentId: engineeringDept?.id },
+      { name: 'Data Science', description: 'Machine learning and data analysis', departmentId: engineeringDept?.id },
+      { name: 'Cybersecurity', description: 'Network and application security', departmentId: engineeringDept?.id },
+      { name: 'Digital Marketing', description: 'SEO, social media, and online campaigns', departmentId: marketingDept?.id },
+      { name: 'Content Strategy', description: 'Content creation and brand messaging', departmentId: marketingDept?.id },
+      { name: 'Financial Analysis', description: 'Financial modeling and reporting', departmentId: financeDept?.id },
+    ];
+
+    for (const topicData of topics) {
+      if (!topicData.departmentId) continue;
+
+      const existingTopic = await this.topicRepository.findOne({
+        where: { name: topicData.name, departmentId: topicData.departmentId },
+      });
+
+      if (!existingTopic) {
+        const topic = this.topicRepository.create(topicData);
+        await this.topicRepository.save(topic);
+        this.logger.log(`✓ Topic created: ${topicData.name}`);
+      } else {
+        this.logger.log(`✓ Topic already exists: ${topicData.name}`);
       }
     }
   }
